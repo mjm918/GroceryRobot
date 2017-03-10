@@ -5,6 +5,7 @@
  * Date: 06/03/2017
  * Time: 21:13
  */
+
 require "DBHandler/Config.php";
 session_start();
 
@@ -46,6 +47,18 @@ else if(isset($_GET['category'])){
     $products = mysqli_query($dbconfig,"SELECT * FROM gr_item WHERE REPLACE (category_name,' ','') = REPLACE('$category',' ','') LIMIT $current_page,$basic_limit");
 
     $page_count = mysqli_query($dbconfig,"SELECT COUNT(*) AS total FROM gr_item WHERE REPLACE (category_name,' ','') = REPLACE('$category',' ','')");
+    $row_page_count = $page_count->fetch_assoc();
+    $last_page = round(intval($row_page_count['total'])/30);
+}else if(isset($_GET['search'])){
+    $query = $_GET['query'];
+    $_SESSION['temp'] = "&search=".$query;
+    if (isset($_GET["page"])) { $requested_page  = $_GET["page"]; } else { $requested_page=1; };
+
+    $current_page = ($requested_page-1)*$basic_limit;
+
+    $products = mysqli_query($dbconfig,"SELECT * FROM gr_item WHERE CONCAT_WS(outlet_name,category_name) LIKE  '%$search%' LIMIT $current_page,$basic_limit");
+
+    $page_count = mysqli_query($dbconfig,"SELECT COUNT(*) AS total FROM gr_item WHERE CONCAT_WS(outlet_name,category_name) LIKE  '%$search%'");
     $row_page_count = $page_count->fetch_assoc();
     $last_page = round(intval($row_page_count['total'])/30);
 }
@@ -94,6 +107,17 @@ else{
             }
         }
     </script>
+
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({
+            google_ad_client: "ca-pub-3712189946123514",
+            enable_page_level_ads: true
+        });
+    </script>
+
+
     <style>
         .productbox {
             background-color:#ffffff;
@@ -157,7 +181,7 @@ else{
 </head>
 <?php include "Header.php";?>
 <body>
-<div style="padding-top: 70px" class="container">
+<div style="padding-top: 70px;padding-bottom: 100px" class="container">
     <div class="row">
         <div class="col-sm-9 col-md-6 col-lg-8">
             <div class="col-sm-3 col-md-3">
@@ -194,11 +218,11 @@ else{
                 </div>
             </div>
             <div class="col-sm-3 col-md-5">
-                <form class="form-inline">
+                <form action="index.php" method="get" class="form-inline">
                     <div class="form-group mx-sm-3">
-                        <input type="text" class="form-control" placeholder="Search by name">
+                        <input id="query" name="query" type="text" class="form-control" placeholder="Search by name">
                     </div>
-                    <input value="Search" type="submit" class="btn btn-default" style="background-color: darkslategray;color: white">
+                    <input id="search" name="search" value="Search" type="submit" class="btn btn-default" style="background-color: darkslategray;color: white">
                 </form>
             </div>
         </div>
@@ -261,7 +285,8 @@ else{
             <!--        Items start-->
             <?php
                 while($row_product = mysqli_fetch_array($products)){
-                    echo '<div style="height: 220px" class="col-md-4 column productbox">
+                    echo '<a href="text-decoration:none">
+            <div data-id="'.$row_product['id'].'" data-name="'.$row_product['product_name'].'" data-category="'.$row_product['category_name'].'" data-outlet="'.$row_product['outlet_name'].'" data-price="'.$row_product['product_price'].'" data-image="'.$row_product['product_image'].'" style="height: 220px;color:darkslategray" class="col-md-4 column productbox">
                 <div class="item">
 <!--                    <span class="notify-badge">Offer!</span>-->
                     <img style="width: 100px;height: 100px;" src="'.$row_product['product_image'].'" class="img-responsive">
@@ -274,29 +299,139 @@ else{
                         </button>
                     </div>
                 <div class="pricetext">'.$row_product['product_price'].'</div></div>
-            </div>';
+            </div></a>
+          
+            ';
                 }
             ?>
 <!--            Items END-->
 <!--            Items END-->
 <!--            Items END-->
         </div>
+        <!--            MODAL-->
+        <!--            MODAL-->
+        <!--            MODAL-->
+        <link rel="stylesheet" type="text/css" href="Semantic/semantic.min.css">
+        <script
+                src="https://code.jquery.com/jquery-3.1.1.min.js"
+                integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+                crossorigin="anonymous"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <script src="Semantic/semantic.min.js"></script>
+
+        <script type="text/javascript">
+            if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+
+            }else{
+                $(document).ready(function(){
+                    $(".col-md-4.column.productbox").click(function(){
+                        var id = $(this).attr("data-id");
+                        var name = $(this).attr("data-name");
+                        var category = $(this).attr("data-category");
+                        var outlet = $(this).attr("data-outlet");
+                        var price = $(this).attr("data-price");
+                        var image = $(this).attr("data-image");
+                        var t_img = document.getElementById("modal_img");
+                        t_img.src = image;
+                        document.getElementById("itemName").innerHTML = name;
+                        document.getElementById("outletName").innerHTML = outlet;
+                        document.getElementById("itemPrice").innerHTML = price;
+                        document.getElementById("itemCategory").innerHTML = category;
+                        document.getElementById("itemID").value=id;
+                        $(".ui.modal").modal("show");
+                    });
+                });
+            }
+        </script>
+
+        <div style="height: 400px" class="ui modal">
+            <i class="close icon"></i>
+            <div id="itemName" class="header">
+                Name
+            </div>
+            <div class="image content">
+                <div class="ui medium image">
+                    <img id="modal_img" style="width: 200px;height:200px;" src="">
+                </div>
+                <div class="description">
+                    <div style="color: grey" class="ui header">Outlet : <strong><p id="outletName">OUTLET</p></strong></div>
+                    <div style="color: grey" class="ui header">Price : <strong><p id="itemPrice">PRICE</p></strong></div>
+                    <p style="color: grey">Category : <strong><p id="itemCategory">CATEGORY</p></strong></p>
+                </div>
+                <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+                <script>
+                    google.charts.load('current', {'packages':['corechart']});
+                    google.charts.setOnLoadCallback(drawChart);
+
+                    function drawChart() {
+                        var data = google.visualization.arrayToDataTable([
+                            ['Date', 'Price'],
+                            ['01-03-2013',  10.00],
+                            ['01-03-2014',  11.70],
+                            ['01-03-2015',  6.60],
+                            ['01-03-2016',  10.30]
+                        ]);
+
+                        var options = {
+                            title: 'Price difference',
+                            hAxis: {title: 'Date',  titleTextStyle: {color: '#333'}},
+                            vAxis: {minValue: 0}
+                        };
+
+                        var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+                        chart.draw(data, options);
+                    }
+                </script>
+                <div id="chart_div" class="pull-left" style="width: 400px; height: 100px;"></div>
+            </div>
+            <form action="index.php" method="post">
+                <input hidden value="" id="itemID" name="itemID" type="text">
+                <input value="Add to cart" type="submit" class="btn btn-success pull-right" style="margin-right:50px;">
+            </form>
+        </div>
+        <!--            MODAL-->
+        <!--            MODAL-->
+        <!--            MODAL-->
 <!--        Here will be Comparison-->
 <!--        Here will be Comparison-->
 <!--        Here will be Comparison-->
         <div class="col-sm-6 col-md-6 col-lg-4">
             <div class="col-sm-3 col-md-12">
                 <div class="well">
-
+                    <p style="color: darkslategray;font-family: Calibri"> Siong Seng</p>
+                    <hr>
+                    <p style="color: grey;font-family: Calibri">Name<strong>Weight</strong></p>
+                    <p style="color: grey;font-family: Calibri">Quantity<strong>Price</strong></p>
+                    <hr>
+                    <p style="float:right;color: darkslategrey;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
+                    <hr>
                 </div>
                 <div class="well">
-
+                    <p style="color: darkslategray;font-family: Calibri">FairPrice</p>
+                    <hr>
+                    <p style="color: grey;font-family: Calibri">Name<strong>Weight</strong></p>
+                    <p style="color: grey;font-family: Calibri">Quantity<strong>Price</strong></p>
+                    <hr>
+                    <p style="float:right;color: darkslategrey;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
+                    <hr>
                 </div>
                 <div class="well">
-
+                    <p style="color: darkslategray;font-family: Calibri;">Cold Storage</p>
+                    <hr>
+                    <p style="color: grey;font-family: Calibri">Name<strong>Weight</strong></p>
+                    <p style="color: grey;font-family: Calibri">Quantity<strong>Price</strong></p>
+                    <hr>
+                    <p style="float:right;color: darkslategrey;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
+                    <hr>
                 </div>
                 <div class="well">
-
+                    <p style="color: darkslategray;font-family: Calibri;">TESCO (Johor Bahru Malaysia)</p>
+                    <hr>
+                    <p style="color: grey;font-family: Calibri">Name<strong>Weight</strong></p>
+                    <pstyle="color: grey;font-family: Calibri">Quantity<strong>Price</strong></p>
+                    <hr>
+                    <p style="float:right;color: darkslategrey;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
+                    <hr>
                 </div>
             </div>
         </div>
