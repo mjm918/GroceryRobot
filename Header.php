@@ -5,6 +5,7 @@
  * Date: 06/03/2017
  * Time: 23:50
  */
+error_reporting(0);
 require "DBHandler/Config.php";
 session_start();
 if($_SERVER["REQUEST_METHOD"] == "POST"){
@@ -20,12 +21,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     $loc = $_POST['loc'];
     $work = $_POST['work'];
     $query = mysqli_query($dbconfig,"INSERT INTO user_data (id,fb_id,fb_name,img,fb_email,fb_firstname,fb_lastname,fb_bday,fb_edu,fb_home,fb_location,fb_work)
-    SELECT * FROM (SELECT NULL,'$id','$name','$img','$email','$fname','$lname','$bday','$edu','$ht','$loc','$work')
-    AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email') LIMIT 1");
+SELECT * FROM (SELECT NULL,'$id','$name','$img','$email','$fname','$lname','$bday','$edu','$ht','$loc','$work')
+AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email') LIMIT 1");
 
-        $_SESSION['email'] = $email;
-        $_SESSION['id'] = $id;
 }
+
 ?>
 <!doctype html>
 <html xmlns:fb="http://www.facebook.com/2008/fbml" lang="en">
@@ -44,13 +44,46 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     <script src="JS/Main.js" type="text/javascript"></script>
     <script src="JS/jquery.js" type="text/javascript"></script>
 
-    <style>
-        #font{
-            font-family: Calibri;
-        }
-    </style>
+    <script type="text/javascript">
+        window.setInterval(function() {
+        $(document).ready(function () {
+            var button = document.getElementById("btn");
+            if(localStorage.hasOwnProperty("email")){
+                console.log(localStorage.getItem("email"));
+                button.style.display = "none";
+            }
+        });
+        }, 30);
+    </script>
+
 </head>
 <body>
+<div class="navbar navbar-inverse navbar-fixed-top" role="navigation" id="slide-nav">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-toggle">
+                <span class="sr-only">Grocery Robot</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </a>
+            <!--            <a href="#" class="navbar-left"><img src="Assets/grocery.png" width="60" height="50"></a>-->
+            <a style="color: white;font-weight: 500;font-size: x-large;" class="navbar-brand" href="index.php">Grocery Robot</a>
+        </div>
+        <div id="slidemenu">
+
+            <fb:login-button  size="large" autologoutlink="true" scope="public_profile,email" onlogin="checkLoginState();" id="btn" style="background-color: Transparent;margin-top:10px" class="navbar-form navbar-right" role="button">
+            </fb:login-button>
+
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="index.php">Grocompare</a></li>
+                <li><a href="#about">Blog</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
 <script>
     //FACEBOOK SDK   [START]
     window.fbAsyncInit = function() {
@@ -121,9 +154,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                                 var return_data = hr.responseText;
                             }
                         }
+                        localStorage.setItem("email",response.email);
+                        localStorage.setItem("id",response.id);
 
                         hr.send(vars); // Actually execute the request
-                        window.location.reload();
                     });
                 } else {
                     console.log('User cancelled login or did not fully authorize.');
@@ -139,49 +173,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     }
     //FACEBOOK SDK   [END]
 </script>
-<div class="navbar navbar-inverse navbar-fixed-top" role="navigation" id="slide-nav">
-    <div class="container">
-        <div class="navbar-header">
-            <a class="navbar-toggle">
-                <span id="font" class="sr-only">Grocery Robot</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </a>
-            <a style="color: white;font-weight: 500;font-size: x-large;" class="navbar-brand" href="index.php">Grocery Robot</a>
-        </div>
-        <div id="slidemenu">
-           <?php
-            if($_SESSION['id']!=""){
-                echo ' <img class="pull-right" style="width: 40px;height: 40px;border-radius: 4px;margin-top: 5px" src="http://graph.facebook.com/'.$_SESSION["id"].'/picture?type=normal" id = "image">';
-//                echo '<button class="btn btn-danger navbar-form navbar-right" role="button" onclick="logHimOut();">Logout</button>';
-            }else{
-                echo '<fb:login-button autologoutlink="true" scope="public_profile,email" onlogin="checkLoginState();" id="btn" style="background-color: Transparent;" class="navbar-form navbar-right" role="button">
-            </fb:login-button>';
-            }
-           ?>
-
-<!--            <a id="btn_after_login" style="text-decoration: none;" href="" class="btn btn-block btn-social btn-facebook">-->
-<!--                <span class="fa fa-facebook"></span><span style="margin-left: 25px">Login with Facebook</span>-->
-<!--            </a>-->
-<!--            -->
-            </div>
-            <ul class="nav navbar-nav">
-                <li class="active"><a id="font" href="index.php">Grocompare</a></li>
-                <li><a id="font" href="#about">Blog</a></li>
-                <li><a id="font" href="#about">About</a></li>
-                <li><a id="font" href="#contact">Contact</a></li>
-            </ul>
-        </div>
-    </div>
-</div>
 <script>
     $(document).ready(function () {
         //stick in the fixed 100% height behind the navbar but don't wrap it
         $('#slide-nav.navbar-inverse').after($('<div class="inverse" id="navbar-height-col"></div>'));
-
         $('#slide-nav.navbar-default').after($('<div id="navbar-height-col"></div>'));
-
         // Enter your ids or classes
         var toggler = '.navbar-toggle';
         var pagewrapper = '#page-content';
@@ -190,38 +186,26 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         var slidewidth = '80%';
         var menuneg = '-100%';
         var slideneg = '-80%';
-
         $("#slide-nav").on("click", toggler, function (e) {
-
             var selected = $(this).hasClass('slide-active');
-
             $('#slidemenu').stop().animate({
                 left: selected ? menuneg : '0px'
             });
-
             $('#navbar-height-col').stop().animate({
                 left: selected ? slideneg : '0px'
             });
-
             $(pagewrapper).stop().animate({
                 left: selected ? '0px' : slidewidth
             });
-
             $(navigationwrapper).stop().animate({
                 left: selected ? '0px' : slidewidth
             });
-
             $(this).toggleClass('slide-active', !selected);
             $('#slidemenu').toggleClass('slide-active');
-
             $('#page-content, .navbar, body, .navbar-header').toggleClass('slide-active');
-
         });
-
         var selected = '#slidemenu, #page-content, body, .navbar, .navbar-header';
-
         $(window).on("resize", function () {
-
             if ($(window).width() > 767 && $('.navbar-toggle').is(':hidden')) {
                 $(selected).removeClass('slide-active');
             }
