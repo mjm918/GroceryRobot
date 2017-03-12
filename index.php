@@ -5,7 +5,7 @@
  * Date: 06/03/2017
  * Time: 21:13
  */
-
+error_reporting(0);
 require "DBHandler/Config.php";
 session_start();
 
@@ -49,18 +49,6 @@ else if(isset($_GET['category'])){
     $page_count = mysqli_query($dbconfig,"SELECT COUNT(*) AS total FROM gr_item WHERE REPLACE (category_name,' ','') = REPLACE('$category',' ','')");
     $row_page_count = $page_count->fetch_assoc();
     $last_page = round(intval($row_page_count['total'])/30);
-}else if(isset($_GET['search'])){
-    $query = $_GET['query'];
-    $_SESSION['temp'] = "&search=".$query;
-    if (isset($_GET["page"])) { $requested_page  = $_GET["page"]; } else { $requested_page=1; };
-
-    $current_page = ($requested_page-1)*$basic_limit;
-
-    $products = mysqli_query($dbconfig,"SELECT * FROM gr_item WHERE CONCAT_WS(outlet_name,category_name) LIKE  '%$search%' LIMIT $current_page,$basic_limit");
-
-    $page_count = mysqli_query($dbconfig,"SELECT COUNT(*) AS total FROM gr_item WHERE CONCAT_WS(outlet_name,category_name) LIKE  '%$search%'");
-    $row_page_count = $page_count->fetch_assoc();
-    $last_page = round(intval($row_page_count['total'])/30);
 }
 //Select category and show result [END]
 else{
@@ -99,13 +87,13 @@ else{
     <script src="JS/jquery.js" type="text/javascript"></script>
 
     <script type="text/javascript">
-        var query = window.location.search.substring(1)
-
-        if(query.length) {
-            if(window.history != undefined && window.history.pushState != undefined) {
-                window.history.pushState({}, document.title, window.location.pathname);
-            }
-        }
+//        var query = window.location.search.substring(1)
+//
+//        if(query.length) {
+//            if(window.history != undefined && window.history.pushState != undefined) {
+//                window.history.pushState({}, document.title, window.location.pathname);
+//            }
+//        }
     </script>
 
 
@@ -218,7 +206,7 @@ else{
                 </div>
             </div>
             <div class="col-sm-3 col-md-5">
-                <form action="index.php" method="get" class="form-inline">
+                <form action="Search.php" method="post" class="form-inline">
                     <div class="form-group mx-sm-3">
                         <input id="query" name="query" type="text" class="form-control" placeholder="Search by name">
                     </div>
@@ -233,7 +221,7 @@ else{
         <!--        -->
         <?php
             if($_GET['category']=="" && $_GET['store']==""){
-                echo '<div id="page" style="margin-top: -20px;" class="col-sm-6 col-md-6 col-lg-4">
+                echo '<div id="page" style="margin-top: -20px;font-family: Calibri;" class="col-sm-6 col-md-6 col-lg-4">
                         <div class="col-sm-3 col-md-12">
                             <ul class="pagination pagination-sm">';
                 for($index = 1; $index<5; $index++){
@@ -286,7 +274,7 @@ else{
             <?php
                 while($row_product = mysqli_fetch_array($products)){
                     echo '<a href="text-decoration:none">
-            <div data-id="'.$row_product['id'].'" data-name="'.$row_product['product_name'].'" data-category="'.$row_product['category_name'].'" data-outlet="'.$row_product['outlet_name'].'" data-price="'.$row_product['product_price'].'" data-image="'.$row_product['product_image'].'" style="height: 220px;color:darkslategray" class="col-md-4 column productbox">
+            <div data-id="'.$row_product['id'].'" data-name="'.$row_product['product_name'].'" data-category="'.$row_product['category_name'].'" data-outlet="'.$row_product['outlet_name'].'" data-price="'.$row_product['product_price'].'" data-image="'.$row_product['product_image'].'" style="height: 220px;color:darkslategray;font-family: Calibri;" class="col-md-4 column productbox">
                 <div class="item">
 <!--                    <span class="notify-badge">Offer!</span>-->
                     <img style="width: 100px;height: 100px;" src="'.$row_product['product_image'].'" class="img-responsive">
@@ -358,6 +346,9 @@ else{
                     <div style="color: grey" class="ui header">Price : <strong><p id="itemPrice">PRICE</p></strong></div>
                     <p style="color: grey">Category : <strong><p id="itemCategory">CATEGORY</p></strong></p>
                 </div>
+                <?php
+
+                ?>
                 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
                 <script>
                     google.charts.load('current', {'packages':['corechart']});
@@ -366,10 +357,16 @@ else{
                     function drawChart() {
                         var data = google.visualization.arrayToDataTable([
                             ['Date', 'Price'],
-                            ['01-03-2013',  10.00],
-                            ['01-03-2014',  11.70],
-                            ['01-03-2015',  6.60],
-                            ['01-03-2016',  10.30]
+                            <?php
+                            $chart = mysqli_query($dbconfig,"SELECT created_date,product_price FROM gr_item WHERE unique_code='coldstorage7-UP6S'");
+                             while($row_chart = mysqli_fetch_array($chart)){
+                                 echo "['".date('M j Y ', strtotime($row_chart['created_date']))."', ".intval($row_chart["product_price"])."],";
+                             }
+                            ?>
+//                            ['01-03-2013',  10.00],
+//                            ['01-03-2014',  11.70],
+//                            ['01-03-2015',  6.60],
+//                            ['01-03-2016',  10.30],
                         ]);
 
                         var options = {

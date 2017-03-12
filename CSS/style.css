@@ -1,4 +1,7 @@
 /* adjust body when menu is open */
+html{
+    font-family: Calibri;
+}
 body.slide-active {
     overflow-x: hidden
 }
