@@ -1,3 +1,4 @@
+<?php session_start(); ?>
 <?php
 /**
  * Created by PhpStorm.
@@ -5,9 +6,8 @@
  * Date: 06/03/2017
  * Time: 21:13
  */
-error_reporting(0);
+
 require "DBHandler/Config.php";
-session_start();
 
 $food_category = mysqli_query($dbconfig,"SELECT DISTINCT category_name FROM gr_item");
 //Pagination and main page load [START]
@@ -18,6 +18,22 @@ $disable = "";
 $current_page = ($requested_page-1)*$basic_limit;
 
 if($current_page == 0){$disable = "display:none;";}
+
+if(isset($_GET['search'])){
+    $q = $_GET['query'];
+
+    $_SESSION['temp'] = "&search=".$q;
+
+    if (isset($_GET["page"])) { $requested_page  = $_GET["page"]; } else { $requested_page=1; };
+
+    $current_page = ($requested_page-1)*$basic_limit;
+
+    $products_search = mysqli_query($dbconfig,"SELECT * FROM gr_item g WHERE g.product_name LIKE '%$q%'");
+
+    $page_count = mysqli_query($dbconfig,"SELECT COUNT(*) AS total FROM gr_item g WHERE g.product_name LIKE '%$q%'");
+    $row_page_count = $page_count->fetch_assoc();
+    $last_page = round(intval($row_page_count['total'])/30);
+}
 
 //Select store and show result [START]
 if(isset($_GET['store'])){
@@ -59,8 +75,11 @@ else{
     $last_page = round(intval($row_page_count['total'])/30);
 }
 //Pagination and main page load [END]
+//Add to CART
+if(isset($_POST['add'])){
 
-
+}
+//Add to CART
 ?>
 <!doctype html>
 <html lang="en">
@@ -195,7 +214,7 @@ else{
                             <span class="caret"></span></button>
 <!--                        Foods category dropdown menu-->
                         <ul class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="menu1">
-                            <li role="presentation"><a role="menuitem" tabindex="-1" href="index.php">All stores</a></li>
+                            <li role="presentation"><a role="menuitem" tabindex="-1" href="index.php">All categories</a></li>
                             <?php
                                 while ($row_category = mysqli_fetch_array($food_category)){
                                     echo '<li role="presentation"><a role="menuitem" tabindex="-1" href="index.php?category='.$row_category['category_name'].'">'.$row_category['category_name'].'</a></li>';
@@ -205,8 +224,8 @@ else{
                     </div>
                 </div>
             </div>
-            <div class="col-sm-3 col-md-5">
-                <form action="Search.php" method="post" class="form-inline">
+            <div style="margin-bottom: 10px" class="col-sm-3 col-md-5">
+                <form action="index.php" method="get" class="form-inline">
                     <div class="form-group mx-sm-3">
                         <input id="query" name="query" type="text" class="form-control" placeholder="Search by name">
                     </div>
@@ -220,7 +239,7 @@ else{
         <!--        -->
         <!--        -->
         <?php
-            if($_GET['category']=="" && $_GET['store']==""){
+            if($_GET['category']=="" && $_GET['store']=="" && $_GET['search']==""){
                 echo '<div id="page" style="margin-top: -20px;font-family: Calibri;" class="col-sm-6 col-md-6 col-lg-4">
                         <div class="col-sm-3 col-md-12">
                             <ul class="pagination pagination-sm">';
@@ -272,17 +291,38 @@ else{
             <!--        Items start-->
             <!--        Items start-->
             <?php
-                while($row_product = mysqli_fetch_array($products)){
-                    echo '<a href="text-decoration:none">
-            <div data-id="'.$row_product['id'].'" data-name="'.$row_product['product_name'].'" data-category="'.$row_product['category_name'].'" data-outlet="'.$row_product['outlet_name'].'" data-price="'.$row_product['product_price'].'" data-image="'.$row_product['product_image'].'" style="height: 220px;color:darkslategray;font-family: Calibri;" class="col-md-4 column productbox">
+                if($_GET['search']!=""){
+                    while($row_product_search = mysqli_fetch_array($products_search)){
+                        echo '<a href="#">
+            <div data-uniq = "'.$row_product_search['unique_code'].'" data-id="'.$row_product_search['id'].'" data-name="'.$row_product_search['product_name'].'" data-category="'.$row_product_search['category_name'].'" data-outlet="'.$row_product_search['outlet_name'].'" data-price="'.$row_product_search['product_price'].'" data-image="'.$row_product_search['product_image'].'" style="margin-right:10px;height: 220px;width:220px;color:darkslategray;font-family: Calibri;" class="col-md-4 column productbox">
+                <div class="item">
+<!--                    <span class="notify-badge">Offer!</span>-->
+                    <img style="width: 100px;height: 100px;" src="'.$row_product_search['product_image'].'" class="img-responsive">
+                </div>
+                <div class="producttitle">'.substr($row_product_search['product_name'],0,15).'.....<p style="float: right">'.$row_product_search['weight'].'</p></div>
+                <div class="productprice">
+                    <div class="pull-right">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <span class="glyphicon glyphicon-shopping-cart"></span>+
+                        </button>
+                    </div>
+                <div class="pricetext">'.$row_product_search['product_price'].'</div></div>
+            </div></a>
+          
+            ';
+                    }
+                }else{
+                    while($row_product = mysqli_fetch_array($products)){
+                        echo '<a href="#">
+            <div data-uniq = "'.$row_product['unique_code'].'" data-id="'.$row_product['id'].'" data-name="'.$row_product['product_name'].'" data-category="'.$row_product['category_name'].'" data-outlet="'.$row_product['outlet_name'].'" data-price="'.$row_product['product_price'].'" data-image="'.$row_product['product_image'].'" style="margin-right:10px;height: 220px;width:220px;color:darkslategray;font-family: Calibri;" class="col-md-4 column productbox">
                 <div class="item">
 <!--                    <span class="notify-badge">Offer!</span>-->
                     <img style="width: 100px;height: 100px;" src="'.$row_product['product_image'].'" class="img-responsive">
                 </div>
-                <div class="producttitle">'.substr($row_product['product_name'],0,20).'.....<p style="float: right">'.$row_product['weight'].'</p></div>
+                <div class="producttitle">'.substr($row_product['product_name'],0,15).'.....<p style="float: right">'.$row_product['weight'].'</p></div>
                 <div class="productprice">
                     <div class="pull-right">
-                        <button type="button" class="btn btn-primary btn-sm">
+                        <button type="submit" class="btn btn-primary btn-sm">
                             <span class="glyphicon glyphicon-shopping-cart"></span>+
                         </button>
                     </div>
@@ -290,6 +330,7 @@ else{
             </div></a>
           
             ';
+                    }
                 }
             ?>
 <!--            Items END-->
@@ -313,6 +354,7 @@ else{
             }else{
                 $(document).ready(function(){
                     $(".col-md-4.column.productbox").click(function(){
+                        var uid = $(this).attr("data-uniq");
                         var id = $(this).attr("data-id");
                         var name = $(this).attr("data-name");
                         var category = $(this).attr("data-category");
@@ -326,6 +368,8 @@ else{
                         document.getElementById("itemPrice").innerHTML = price;
                         document.getElementById("itemCategory").innerHTML = category;
                         document.getElementById("itemID").value=id;
+                    });
+                    $(".item").click(function () {
                         $(".ui.modal").modal("show");
                     });
                 });
@@ -346,9 +390,7 @@ else{
                     <div style="color: grey" class="ui header">Price : <strong><p id="itemPrice">PRICE</p></strong></div>
                     <p style="color: grey">Category : <strong><p id="itemCategory">CATEGORY</p></strong></p>
                 </div>
-                <?php
 
-                ?>
                 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
                 <script>
                     google.charts.load('current', {'packages':['corechart']});
@@ -358,9 +400,9 @@ else{
                         var data = google.visualization.arrayToDataTable([
                             ['Date', 'Price'],
                             <?php
-                            $chart = mysqli_query($dbconfig,"SELECT created_date,product_price FROM gr_item WHERE unique_code='coldstorage7-UP6S'");
+                            $chart = mysqli_query($dbconfig,"SELECT created_date,product_price FROM gr_item WHERE unique_code='coldstorage7-UP6S' order by created_date asc");
                              while($row_chart = mysqli_fetch_array($chart)){
-                                 echo "['".date('M j Y ', strtotime($row_chart['created_date']))."', ".intval($row_chart["product_price"])."],";
+                                 echo "['".date('M j', strtotime($row_chart['created_date']))."', ".intval($row_chart["product_price"])."],";
                              }
                             ?>
 //                            ['01-03-2013',  10.00],
@@ -381,9 +423,29 @@ else{
                 </script>
                 <div id="chart_div" class="pull-left" style="width: 400px; height: 100px;"></div>
             </div>
+            <div class="input-group pull-left" style="width:15%;margin-left: 100px">
+									               	<span class="input-group-btn">
+									                  	<button class="btn btn-white btn-minuse" type="button">-</button>
+									               	</span>
+                <input type="text" class="form-control no-padding add-color text-center height-25" min="1" maxlength="3" value="1">
+                <span class="input-group-btn">
+									                  	<button class="btn btn-red btn-pluss" type="button">+</button>
+									               	</span>
+            </div>
+            <script>
+                $('.btn-minuse').on('click', function(){
+                    $(this).parent().siblings('input').val(parseInt($(this).parent().siblings('input').val()) - 1)
+                });
+
+                $('.btn-pluss').on('click', function(){
+                    $(this).parent().siblings('input').val(parseInt($(this).parent().siblings('input').val()) + 1)
+                });
+
+            </script>
+
             <form action="index.php" method="post">
                 <input hidden value="" id="itemID" name="itemID" type="text">
-                <input value="Add to cart" type="submit" class="btn btn-success pull-right" style="margin-right:50px;">
+                <input id="add" name="add" value="Add to cart" type="submit" class="btn btn-success pull-right" style="margin-right:50px;">
             </form>
         </div>
         <!--            MODAL-->
@@ -394,40 +456,40 @@ else{
 <!--        Here will be Comparison-->
         <div class="col-sm-6 col-md-6 col-lg-4">
             <div class="col-sm-3 col-md-12">
-                <div class="well">
-                    <p style="color: darkslategray;font-family: Calibri"> Siong Seng</p>
+                <div style="background-color: #4C7591;color:white" class="well">
+                    <p style="font-weight:700;font-size:20px;font-family: Calibri"> Siong Seng</p>
                     <hr>
-                    <p style="color: grey;font-family: Calibri">Name<strong>Weight</strong></p>
-                    <p style="color: grey;font-family: Calibri">Quantity<strong>Price</strong></p>
+                    <p style="font-family: Calibri">Name<strong>Weight</strong></p>
+                    <p style="font-family: Calibri">Quantity<strong>Price</strong></p>
                     <hr>
-                    <p style="float:right;color: darkslategrey;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
-                    <hr>
-                </div>
-                <div class="well">
-                    <p style="color: darkslategray;font-family: Calibri">FairPrice</p>
-                    <hr>
-                    <p style="color: grey;font-family: Calibri">Name<strong>Weight</strong></p>
-                    <p style="color: grey;font-family: Calibri">Quantity<strong>Price</strong></p>
-                    <hr>
-                    <p style="float:right;color: darkslategrey;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
+                    <p style="float:right;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
                     <hr>
                 </div>
-                <div class="well">
-                    <p style="color: darkslategray;font-family: Calibri;">Cold Storage</p>
+                <div style="background-color: #EE2E24;color:white" class="well">
+                    <p style="font-weight:700;font-size:20px;font-family: Calibri">FairPrice</p>
                     <hr>
-                    <p style="color: grey;font-family: Calibri">Name<strong>Weight</strong></p>
-                    <p style="color: grey;font-family: Calibri">Quantity<strong>Price</strong></p>
+                    <p style="font-family: Calibri">Name<strong>Weight</strong></p>
+                    <p style="font-family: Calibri">Quantity<strong>Price</strong></p>
                     <hr>
-                    <p style="float:right;color: darkslategrey;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
+                    <p style="float:right;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
                     <hr>
                 </div>
-                <div class="well">
-                    <p style="color: darkslategray;font-family: Calibri;">TESCO (Johor Bahru Malaysia)</p>
+                <div style="background-color: #0DAF4A;color:white" class="well">
+                    <p style="font-weight:700;font-size:20px;font-family: Calibri;">Cold Storage</p>
                     <hr>
-                    <p style="color: grey;font-family: Calibri">Name<strong>Weight</strong></p>
-                    <pstyle="color: grey;font-family: Calibri">Quantity<strong>Price</strong></p>
+                    <p style="font-family: Calibri">Name<strong>Weight</strong></p>
+                    <p style="font-family: Calibri">Quantity<strong>Price</strong></p>
                     <hr>
-                    <p style="float:right;color: darkslategrey;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
+                    <p style="float:right;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
+                    <hr>
+                </div>
+                <div style="background-color: #0855A0;color:white" class="well">
+                    <p style="font-weight:700;font-size:20px;font-family: Calibri;">TESCO (Johor Bahru Malaysia)</p>
+                    <hr>
+                    <p style="font-family: Calibri">Name<strong>Weight</strong></p>
+                    <p style="font-family: Calibri">Quantity<strong>Price</strong></p>
+                    <hr>
+                    <p style="float:right;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
                     <hr>
                 </div>
             </div>

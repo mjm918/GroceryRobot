@@ -1,3 +1,4 @@
+<?php session_start(); ?>
 <?php
 /**
  * Created by PhpStorm.
@@ -5,9 +6,8 @@
  * Date: 06/03/2017
  * Time: 23:50
  */
-error_reporting(0);
 require "DBHandler/Config.php";
-session_start();
+
 if($_SERVER["REQUEST_METHOD"] == "POST"){
     $id = $_POST['id'];
     $name = $_POST['name'];
@@ -24,6 +24,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 SELECT * FROM (SELECT NULL,'$id','$name','$img','$email','$fname','$lname','$bday','$edu','$ht','$loc','$work')
 AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email') LIMIT 1");
 
+    $_SESSION['email'] = $_POST['email'];
 }
 
 ?>
@@ -47,15 +48,30 @@ AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email')
     <script type="text/javascript">
         window.setInterval(function() {
         $(document).ready(function () {
-            var button = document.getElementById("btn");
+            var button_login = document.getElementById("btn");
+            var button_logout = document.getElementById("btn_logout");
             if(localStorage.hasOwnProperty("email")){
-                console.log(localStorage.getItem("email"));
-                button.style.display = "none";
+                button_login.style.display = "none";
+                button_logout.style.display = "";
+            }else{
+                button_logout.style.display = "none";
+                button_login.style.display = "";
             }
         });
         }, 30);
     </script>
 
+    <style>
+        #btn_logout{
+            text-align: center;
+            color:white;
+            background-color:#3b5998;
+            height: 30px;
+            font-weight: 700;
+            margin-top:10px;
+            border-radius:2px;
+        }
+    </style>
 </head>
 <body>
 <div class="navbar navbar-inverse navbar-fixed-top" role="navigation" id="slide-nav">
@@ -72,8 +88,10 @@ AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email')
         </div>
         <div id="slidemenu">
 
-            <fb:login-button  size="large" autologoutlink="true" scope="public_profile,email" onlogin="checkLoginState();" id="btn" style="background-color: Transparent;margin-top:10px" class="navbar-form navbar-right" role="button">
+            <fb:login-button  size="large" scope="public_profile,email" onlogin="checkLoginState();" id="btn" style="background-color: Transparent;margin-top:10px" class="navbar-form navbar-right" role="button">
             </fb:login-button>
+            <button onclick="javascript:logHimOut();" id="btn_logout" class="navbar-form navbar-right btn btn-default btn-social btn-facebook">Log Out
+            </button>
 
             <ul class="nav navbar-nav">
                 <li class="active"><a href="index.php">Grocompare</a></li>
@@ -145,7 +163,7 @@ AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email')
                         var url = "Header.php";
                         //"firstname="+response.id+"&lastname="+response.na
                         var vars = "id="+response.id+"&name="+response.name+"&fname="+response.first_name+"&lname="+response.last_name+"&img="+img_link+
-                            "&bday="+response.birthday+"&edu="+response.education[0].school.name+"&ht="+response.hometown.name+"&loc="+response.location.name+"&work="+response.work[0].name+"&email="+response.email;
+                            "&bday="+response.birthday+"&edu="+response.education[response.education.length - 1].school.name+"&ht="+response.hometown.name+"&loc="+response.location.name+"&work="+response.work[response.work.length - 1].employer.name+"&email="+response.email;
                         hr.open("POST", url, true);
                         hr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
@@ -167,9 +185,7 @@ AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email')
         );
     }
     function logHimOut(){
-        FB.logout(function(response) {
-
-        });
+        localStorage.removeItem("email");
     }
     //FACEBOOK SDK   [END]
 </script>
