@@ -9,6 +9,8 @@
 
 require "DBHandler/Config.php";
 
+$_SESSION['email'] = $_COOKIE['cookiee'];
+
 $food_category = mysqli_query($dbconfig,"SELECT DISTINCT category_name FROM gr_item");
 //Pagination and main page load [START]
 if (isset($_GET["page"])) { $requested_page  = $_GET["page"]; } else { $requested_page=1; };
@@ -28,9 +30,9 @@ if(isset($_GET['search'])){
 
     $current_page = ($requested_page-1)*$basic_limit;
 
-    $products_search = mysqli_query($dbconfig,"SELECT * FROM gr_item g WHERE g.product_name LIKE '%$q%'");
+    $products_search = mysqli_query($dbconfig,"SELECT * FROM gr_item g WHERE REPLACE( g.product_name,' ','' ) LIKE REPLACE('%$q%',' ','')");
 
-    $page_count = mysqli_query($dbconfig,"SELECT COUNT(*) AS total FROM gr_item g WHERE g.product_name LIKE '%$q%'");
+    $page_count = mysqli_query($dbconfig,"SELECT COUNT(*) AS total FROM gr_item g WHERE REPLACE( g.product_name,' ','' ) LIKE REPLACE('%$q%',' ','')");
     $row_page_count = $page_count->fetch_assoc();
     $last_page = round(intval($row_page_count['total'])/30);
 }
@@ -75,11 +77,6 @@ else{
     $last_page = round(intval($row_page_count['total'])/30);
 }
 //Pagination and main page load [END]
-//Add to CART
-if(isset($_POST['add'])){
-
-}
-//Add to CART
 ?>
 <!doctype html>
 <html lang="en">
@@ -89,7 +86,7 @@ if(isset($_POST['add'])){
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<!--    <link href="assets/midp.ico" rel="shortcut icon" type="image/x-icon" />-->
+    <!--    <link href="assets/midp.ico" rel="shortcut icon" type="image/x-icon" />-->
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="CSS/style.css">
     <link rel="stylesheet" href="CSS/bootstrap-social.css">
@@ -106,13 +103,13 @@ if(isset($_POST['add'])){
     <script src="JS/jquery.js" type="text/javascript"></script>
 
     <script type="text/javascript">
-//        var query = window.location.search.substring(1)
-//
-//        if(query.length) {
-//            if(window.history != undefined && window.history.pushState != undefined) {
-//                window.history.pushState({}, document.title, window.location.pathname);
-//            }
-//        }
+        //        var query = window.location.search.substring(1)
+        //
+        //        if(query.length) {
+        //            if(window.history != undefined && window.history.pushState != undefined) {
+        //                window.history.pushState({}, document.title, window.location.pathname);
+        //            }
+        //        }
     </script>
 
 
@@ -188,18 +185,21 @@ if(isset($_POST['add'])){
 </head>
 <?php include "Header.php";?>
 <body>
+<link rel="stylesheet" href="dist/sweetalert.css">
+<script src="dist/sweetalert.min.js"></script>
+<script src="dist/sweetalert-dev.js"></script>
 <div style="padding-top: 70px;padding-bottom: 100px" class="container">
     <div class="row">
         <div class="col-sm-9 col-md-6 col-lg-8">
             <div class="col-sm-3 col-md-3">
                 <div class="form-group">
                     <div class="dropdown">
-<!--                        Store dropdown menu-->
+                        <!--                        Store dropdown menu-->
                         <button class="btn btn-block btn-default dropdown-toggle" type="button" id="menu1" data-toggle="dropdown">Choose store
                             <span class="caret"></span></button>
                         <ul class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="menu1">
                             <li role="presentation"><a role="menuitem" tabindex="-1" href="index.php">All stores</a></li>
-                            <li role="presentation"><a role="menuitem" tabindex="-1" href="index.php?store=shengsiong">Siong Seng</a></li>
+                            <li role="presentation"><a role="menuitem" tabindex="-1" href="index.php?store=shengsiong">Sheng Siong</a></li>
                             <li role="presentation"><a role="menuitem" tabindex="-1" href="index.php?store=fairprice">FairPrice</a></li>
                             <li role="presentation"><a role="menuitem" tabindex="-1" href="index.php?store=coldstorage">Cold Storage</a></li>
                             <li role="presentation"><a role="menuitem" tabindex="-1" href="index.php?store=tesco-my">TESCO (Johor Bahru Malaysia)</a></li>
@@ -212,13 +212,13 @@ if(isset($_POST['add'])){
                     <div class="dropdown">
                         <button class="btn btn-block btn-default dropdown-toggle" type="button" id="menu1" data-toggle="dropdown">Foods category
                             <span class="caret"></span></button>
-<!--                        Foods category dropdown menu-->
+                        <!--                        Foods category dropdown menu-->
                         <ul class="dropdown-menu scrollable-menu" role="menu" aria-labelledby="menu1">
                             <li role="presentation"><a role="menuitem" tabindex="-1" href="index.php">All categories</a></li>
                             <?php
-                                while ($row_category = mysqli_fetch_array($food_category)){
-                                    echo '<li role="presentation"><a role="menuitem" tabindex="-1" href="index.php?category='.$row_category['category_name'].'">'.$row_category['category_name'].'</a></li>';
-                                }
+                            while ($row_category = mysqli_fetch_array($food_category)){
+                                echo '<li role="presentation"><a role="menuitem" tabindex="-1" href="index.php?category='.$row_category['category_name'].'">'.$row_category['category_name'].'</a></li>';
+                            }
                             ?>
                         </ul>
                     </div>
@@ -239,45 +239,45 @@ if(isset($_POST['add'])){
         <!--        -->
         <!--        -->
         <?php
-            if($_GET['category']=="" && $_GET['store']=="" && $_GET['search']==""){
-                echo '<div id="page" style="margin-top: -20px;font-family: Calibri;" class="col-sm-6 col-md-6 col-lg-4">
+        if($_GET['category']=="" && $_GET['store']=="" && $_GET['search']==""){
+            echo '<div id="page" style="margin-top: -20px;font-family: Calibri;" class="col-sm-6 col-md-6 col-lg-4">
                         <div class="col-sm-3 col-md-12">
                             <ul class="pagination pagination-sm">';
-                for($index = 1; $index<5; $index++){
-                    echo '<li><a href="index.php?page='.$index.'">'.$index.'</a></li>';
-                }
-                echo '
-                        <li><a href="#">..</a></li>
-                        <li><a href="#">..</a></li>
-                     ';
-                echo '<li><a href="index.php?page='.$last_page.'">'.$last_page.'</a></li>';
-                echo '<li style="'.$disable.'"><a href="index.php?page='.($requested_page-1).'">Previous</a></li>';
-                echo '<li><a href="index.php?page='.($requested_page+1).'">Next</a></li>';
-                echo '
-                            </ul>
-                            </div>
-                        </div>
-                     ';
-            }else{
-                echo '<div id="page" style="margin-top: -20px;" class="col-sm-6 col-md-6 col-lg-4">
-                        <div class="col-sm-3 col-md-12">
-                            <ul class="pagination pagination-sm">';
-                for($index = 1; $index<5; $index++){
-                    echo '<li><a href="index.php?page='.$index.$_SESSION['temp'].'">'.$index.'</a></li>';
-                }
-                echo '
-                        <li><a href="#">..</a></li>
-                        <li><a href="#">..</a></li>
-                     ';
-                echo '<li><a href="index.php?page='.$last_page.$_SESSION['temp'].'">'.$last_page.'</a></li>';
-                echo '<li style="'.$disable.'"><a href="index.php?page='.($requested_page-1).$_SESSION['temp'].'">Previous</a></li>';
-                echo '<li><a href="index.php?page='.($requested_page+1).$_SESSION['temp'].'">Next</a></li>';
-                echo '
-                            </ul>
-                            </div>
-                        </div>
-                     ';
+            for($index = 1; $index<5; $index++){
+                echo '<li><a href="index.php?page='.$index.'">'.$index.'</a></li>';
             }
+            echo '
+                        <li><a href="#">..</a></li>
+                        <li><a href="#">..</a></li>
+                     ';
+            echo '<li><a href="index.php?page='.$last_page.'">'.$last_page.'</a></li>';
+            echo '<li style="'.$disable.'"><a href="index.php?page='.($requested_page-1).'">Previous</a></li>';
+            echo '<li><a href="index.php?page='.($requested_page+1).'">Next</a></li>';
+            echo '
+                            </ul>
+                            </div>
+                        </div>
+                     ';
+        }else{
+            echo '<div id="page" style="margin-top: -20px;" class="col-sm-6 col-md-6 col-lg-4">
+                        <div class="col-sm-3 col-md-12">
+                            <ul class="pagination pagination-sm">';
+            for($index = 1; $index<5; $index++){
+                echo '<li><a href="index.php?page='.$index.$_SESSION['temp'].'">'.$index.'</a></li>';
+            }
+            echo '
+                        <li><a href="#">..</a></li>
+                        <li><a href="#">..</a></li>
+                     ';
+            echo '<li><a href="index.php?page='.$last_page.$_SESSION['temp'].'">'.$last_page.'</a></li>';
+            echo '<li style="'.$disable.'"><a href="index.php?page='.($requested_page-1).$_SESSION['temp'].'">Previous</a></li>';
+            echo '<li><a href="index.php?page='.($requested_page+1).$_SESSION['temp'].'">Next</a></li>';
+            echo '
+                            </ul>
+                            </div>
+                        </div>
+                     ';
+        }
         ?>
         <!--        -->
         <!--        -->
@@ -291,10 +291,10 @@ if(isset($_POST['add'])){
             <!--        Items start-->
             <!--        Items start-->
             <?php
-                if($_GET['search']!=""){
-                    while($row_product_search = mysqli_fetch_array($products_search)){
-                        echo '<a href="#">
-            <div data-uniq = "'.$row_product_search['unique_code'].'" data-id="'.$row_product_search['id'].'" data-name="'.$row_product_search['product_name'].'" data-category="'.$row_product_search['category_name'].'" data-outlet="'.$row_product_search['outlet_name'].'" data-price="'.$row_product_search['product_price'].'" data-image="'.$row_product_search['product_image'].'" style="margin-right:10px;height: 220px;width:220px;color:darkslategray;font-family: Calibri;" class="col-md-4 column productbox">
+            if($_GET['search']!=""){
+                while($row_product_search = mysqli_fetch_array($products_search)){
+                    echo '<a href="#">
+            <div data-uniq="'.$row_product_search['unique_code'].'" data-id="'.$row_product_search['id'].'" data-name="'.$row_product_search['product_name'].'" data-category="'.$row_product_search['category_name'].'" data-outlet="'.$row_product_search['outlet_name'].'" data-price="'.$row_product_search['product_price'].'" data-image="'.$row_product_search['product_image'].'" style="margin-right:10px;height: 220px;width:220px;color:darkslategray;font-family: Calibri;" class="col-md-4 column productbox">
                 <div class="item">
 <!--                    <span class="notify-badge">Offer!</span>-->
                     <img style="width: 100px;height: 100px;" src="'.$row_product_search['product_image'].'" class="img-responsive">
@@ -302,7 +302,7 @@ if(isset($_POST['add'])){
                 <div class="producttitle">'.substr($row_product_search['product_name'],0,15).'.....<p style="float: right">'.$row_product_search['weight'].'</p></div>
                 <div class="productprice">
                     <div class="pull-right">
-                        <button type="submit" class="btn btn-primary btn-sm">
+                        <button data-quan="1" data-uniq="'.$row_product_search['unique_code'].'" data-email="'.$_SESSION['email'].'" data-id="'.$row_product_search['id'].'" type="submit" class="btn btn-primary btn-sm">
                             <span class="glyphicon glyphicon-shopping-cart"></span>+
                         </button>
                     </div>
@@ -310,11 +310,11 @@ if(isset($_POST['add'])){
             </div></a>
           
             ';
-                    }
-                }else{
-                    while($row_product = mysqli_fetch_array($products)){
-                        echo '<a href="#">
-            <div data-uniq = "'.$row_product['unique_code'].'" data-id="'.$row_product['id'].'" data-name="'.$row_product['product_name'].'" data-category="'.$row_product['category_name'].'" data-outlet="'.$row_product['outlet_name'].'" data-price="'.$row_product['product_price'].'" data-image="'.$row_product['product_image'].'" style="margin-right:10px;height: 220px;width:220px;color:darkslategray;font-family: Calibri;" class="col-md-4 column productbox">
+                }
+            }else{
+                while($row_product = mysqli_fetch_array($products)){
+                    echo '<a href="#">
+            <div data-uniq="'.$row_product['unique_code'].'" data-id="'.$row_product['id'].'" data-name="'.$row_product['product_name'].'" data-category="'.$row_product['category_name'].'" data-outlet="'.$row_product['outlet_name'].'" data-price="'.$row_product['product_price'].'" data-image="'.$row_product['product_image'].'" style="margin-right:10px;height: 220px;width:220px;color:darkslategray;font-family: Calibri;" class="col-md-4 column productbox">
                 <div class="item">
 <!--                    <span class="notify-badge">Offer!</span>-->
                     <img style="width: 100px;height: 100px;" src="'.$row_product['product_image'].'" class="img-responsive">
@@ -322,7 +322,7 @@ if(isset($_POST['add'])){
                 <div class="producttitle">'.substr($row_product['product_name'],0,15).'.....<p style="float: right">'.$row_product['weight'].'</p></div>
                 <div class="productprice">
                     <div class="pull-right">
-                        <button type="submit" class="btn btn-primary btn-sm">
+                        <button data-uniq="'.$row_product['unique_code'].'" data-quan="1" data-email="'.$_SESSION['email'].'" data-id="'.$row_product['id'].'" type="submit" class="btn btn-primary btn-sm">
                             <span class="glyphicon glyphicon-shopping-cart"></span>+
                         </button>
                     </div>
@@ -330,12 +330,42 @@ if(isset($_POST['add'])){
             </div></a>
           
             ';
-                    }
                 }
+            }
             ?>
-<!--            Items END-->
-<!--            Items END-->
-<!--            Items END-->
+            <script>
+                $(document).ready(function () {
+                    $(".btn.btn-primary.btn-sm").click(function () {
+                        var email = $(this).attr("data-email");
+                        var id = $(this).attr("data-id");
+                        var quan = $(this).attr("data-quan");
+                        var uniq = $(this).attr("data-uniq");
+
+                        if(email==""){
+                            swal("Error","User's email not found. Please login again or Refresh the page again","error");
+                        }else{
+                            $.ajax({
+                                type: "POST",
+                                url: "DBHandler/SaveToCart.php",
+                                data: {email:email,id:id,quan:quan,uniq:uniq},
+                                dataType: 'json',
+                                success: function(data){
+                                    var key = data.key;
+                                    var message = data.message;
+                                    if(key=="0"){
+                                        swal("Error!",message,"error");
+                                    }else{
+                                        //swal("Success!",message,"success");
+                                    }
+                                }
+                            });
+                        }
+                    });
+                });
+            </script>
+            <!--            Items END-->
+            <!--            Items END-->
+            <!--            Items END-->
         </div>
         <!--            MODAL-->
         <!--            MODAL-->
@@ -363,11 +393,16 @@ if(isset($_POST['add'])){
                         var image = $(this).attr("data-image");
                         var t_img = document.getElementById("modal_img");
                         t_img.src = image;
+
+                        console.log(uid+"---->"+id);
+
+                        localStorage.setItem("uid",uid);
+                        localStorage.setItem("id",id);
+
                         document.getElementById("itemName").innerHTML = name;
                         document.getElementById("outletName").innerHTML = outlet;
                         document.getElementById("itemPrice").innerHTML = price;
                         document.getElementById("itemCategory").innerHTML = category;
-                        document.getElementById("itemID").value=id;
                     });
                     $(".item").click(function () {
                         $(".ui.modal").modal("show");
@@ -401,9 +436,9 @@ if(isset($_POST['add'])){
                             ['Date', 'Price'],
                             <?php
                             $chart = mysqli_query($dbconfig,"SELECT created_date,product_price FROM gr_item WHERE unique_code='coldstorage7-UP6S' order by created_date asc");
-                             while($row_chart = mysqli_fetch_array($chart)){
-                                 echo "['".date('M j', strtotime($row_chart['created_date']))."', ".intval($row_chart["product_price"])."],";
-                             }
+                            while($row_chart = mysqli_fetch_array($chart)){
+                                echo "['".date('M j', strtotime($row_chart['created_date']))."', ".intval($row_chart["product_price"])."],";
+                            }
                             ?>
 //                            ['01-03-2013',  10.00],
 //                            ['01-03-2014',  11.70],
@@ -427,7 +462,7 @@ if(isset($_POST['add'])){
 									               	<span class="input-group-btn">
 									                  	<button class="btn btn-white btn-minuse" type="button">-</button>
 									               	</span>
-                <input type="text" class="form-control no-padding add-color text-center height-25" min="1" maxlength="3" value="1">
+                <input id="quantity" type="text" class="form-control no-padding add-color text-center height-25" maxlength="3" value="1">
                 <span class="input-group-btn">
 									                  	<button class="btn btn-red btn-pluss" type="button">+</button>
 									               	</span>
@@ -443,54 +478,176 @@ if(isset($_POST['add'])){
 
             </script>
 
-            <form action="index.php" method="post">
-                <input hidden value="" id="itemID" name="itemID" type="text">
-                <input id="add" name="add" value="Add to cart" type="submit" class="btn btn-success pull-right" style="margin-right:50px;">
-            </form>
+            <button data-email="<?php echo $_SESSION['email'];?>" id="add" name="add" type="submit" class="btn btn-success pull-right" style="margin-right:50px;">Add to cart</button>
         </div>
+        <script>
+            $(document).ready(function () {
+                $(".btn.btn-success.pull-right").click(function () {
+                    var email = $(this).attr("data-email");
+                    var quan = document.getElementById("quantity").value;
+                    var uid = localStorage.getItem("uid");
+                    var id = localStorage.getItem("id");
+
+                    console.log(uid+"------>"+id);
+
+                    if(email==""){
+                        swal("Error","User's email not found. Please login again or Refresh the page again","error");
+                    }else{
+                        $.ajax({
+                            type: "POST",
+                            url: "DBHandler/SaveToCart.php",
+                            data: {email:email,id:id,quan:quan,uniq:uid},
+                            dataType: 'json',
+                            success: function(data){
+                                var key = data.key;
+                                var message = data.message;
+                                if(key=="0"){
+                                    swal("Error!",message,"error");
+                                }else{
+                                    swal("Success!",message,"success");
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        </script>
         <!--            MODAL-->
         <!--            MODAL-->
         <!--            MODAL-->
-<!--        Here will be Comparison-->
-<!--        Here will be Comparison-->
-<!--        Here will be Comparison-->
+        <!--        Here will be Comparison-->
+        <!--        Here will be Comparison-->
+        <!--        Here will be Comparison-->
+        <script>
+            function getCookie(name) {
+                var value = "; " + document.cookie;
+                var parts = value.split("; " + name + "=");
+                if (parts.length == 2) return parts.pop().split(";").shift();
+            }
+
+            $(document).ready(function () {
+                $("#clear").click(function () {
+                    var email = getCookie("cookiee");
+                    console.log(email);
+                    $.ajax({
+                        type: "POST",
+                        url: "DBHandler/ClearCart.php",
+                        data: {email:email},
+                        dataType: 'json',
+                        success: function(data){
+                            var key = data.key;
+                            if(key=="0"){
+                                //location.reload('index.php');
+                            }
+                        }
+                    });
+                });
+            });
+        </script>
         <div class="col-sm-6 col-md-6 col-lg-4">
             <div class="col-sm-3 col-md-12">
+<!--                $check_cart = mysqli_query($dbconfig,"select * from gr_cart where user_email='$check_email' and active_status='1'");-->
+<!--                if(mysqli_num_rows($check_cart)>0){-->
+<!--                echo '1';-->
+<!--                }-->
+                <div id="showButton" style="margin-bottom:20px;font-weight:700;">
+                    <button id="clear" class="btn btn-primary btn-block type="button">Clear cart</button>
+                </div>
                 <div style="background-color: #4C7591;color:white" class="well">
-                    <p style="font-weight:700;font-size:20px;font-family: Calibri"> Siong Seng</p>
-                    <hr>
-                    <p style="font-family: Calibri">Name<strong>Weight</strong></p>
-                    <p style="font-family: Calibri">Quantity<strong>Price</strong></p>
-                    <hr>
-                    <p style="float:right;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
-                    <hr>
+                    <div id="siong">
+                        <script>
+                            window.setInterval(function () {
+                                $(document).ready(function () {
+                                    if (window.XMLHttpRequest) {
+                                        // code for IE7+, Firefox, Chrome, Opera, Safari
+                                        xmlhttp = new XMLHttpRequest();
+                                    } else {
+                                        // code for IE6, IE5
+                                        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+                                    }
+                                    xmlhttp.onreadystatechange = function() {
+                                        if (this.readyState == 4 && this.status == 200) {
+                                            document.getElementById("siong").innerHTML = this.responseText;
+                                        }
+                                    };
+                                    xmlhttp.open("GET","DBHandler/SiongSeng.php",true);
+                                    xmlhttp.send();
+                                });
+                            },300);
+                        </script>
+                    </div>
                 </div>
                 <div style="background-color: #EE2E24;color:white" class="well">
-                    <p style="font-weight:700;font-size:20px;font-family: Calibri">FairPrice</p>
-                    <hr>
-                    <p style="font-family: Calibri">Name<strong>Weight</strong></p>
-                    <p style="font-family: Calibri">Quantity<strong>Price</strong></p>
-                    <hr>
-                    <p style="float:right;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
-                    <hr>
+                    <div id="fair">
+                        <script>
+                            window.setInterval(function () {
+                                $(document).ready(function () {
+                                    if (window.XMLHttpRequest) {
+                                        // code for IE7+, Firefox, Chrome, Opera, Safari
+                                        xmlhttp = new XMLHttpRequest();
+                                    } else {
+                                        // code for IE6, IE5
+                                        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+                                    }
+                                    xmlhttp.onreadystatechange = function() {
+                                        if (this.readyState == 4 && this.status == 200) {
+                                            document.getElementById("fair").innerHTML = this.responseText;
+                                        }
+                                    };
+                                    xmlhttp.open("GET","DBHandler/FairPrice.php",true);
+                                    xmlhttp.send();
+                                });
+                            },300);
+                        </script>
+                    </div>
                 </div>
                 <div style="background-color: #0DAF4A;color:white" class="well">
-                    <p style="font-weight:700;font-size:20px;font-family: Calibri;">Cold Storage</p>
-                    <hr>
-                    <p style="font-family: Calibri">Name<strong>Weight</strong></p>
-                    <p style="font-family: Calibri">Quantity<strong>Price</strong></p>
-                    <hr>
-                    <p style="float:right;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
-                    <hr>
+                    <div id="coldstorage">
+                        <script>
+                            window.setInterval(function () {
+                                $(document).ready(function () {
+                                    if (window.XMLHttpRequest) {
+                                        // code for IE7+, Firefox, Chrome, Opera, Safari
+                                        xmlhttp = new XMLHttpRequest();
+                                    } else {
+                                        // code for IE6, IE5
+                                        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+                                    }
+                                    xmlhttp.onreadystatechange = function() {
+                                        if (this.readyState == 4 && this.status == 200) {
+                                            document.getElementById("coldstorage").innerHTML = this.responseText;
+                                        }
+                                    };
+                                    xmlhttp.open("GET","DBHandler/ColdStorage.php",true);
+                                    xmlhttp.send();
+                                });
+                            },300);
+                        </script>
+                    </div>
                 </div>
                 <div style="background-color: #0855A0;color:white" class="well">
-                    <p style="font-weight:700;font-size:20px;font-family: Calibri;">TESCO (Johor Bahru Malaysia)</p>
-                    <hr>
-                    <p style="font-family: Calibri">Name<strong>Weight</strong></p>
-                    <p style="font-family: Calibri">Quantity<strong>Price</strong></p>
-                    <hr>
-                    <p style="float:right;font-family: Calibri;font-size: 15px">Price<strong>DOLLAR</strong></p>
-                    <hr>
+                    <div id="tesco">
+                        <script>
+                            window.setInterval(function () {
+                                $(document).ready(function () {
+                                    if (window.XMLHttpRequest) {
+                                        // code for IE7+, Firefox, Chrome, Opera, Safari
+                                        xmlhttp = new XMLHttpRequest();
+                                    } else {
+                                        // code for IE6, IE5
+                                        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+                                    }
+                                    xmlhttp.onreadystatechange = function() {
+                                        if (this.readyState == 4 && this.status == 200) {
+                                            document.getElementById("tesco").innerHTML = this.responseText;
+                                        }
+                                    };
+                                    xmlhttp.open("GET","DBHandler/Tesco.php",true);
+                                    xmlhttp.send();
+                                });
+                            },300);
+                        </script>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,4 +1,4 @@
-<?php session_start(); ?>
+<?php  ?>
 <?php
 /**
  * Created by PhpStorm.
@@ -7,8 +7,11 @@
  * Time: 23:50
  */
 require "DBHandler/Config.php";
-
+session_start();
 if($_SERVER["REQUEST_METHOD"] == "POST"){
+
+    $_SESSION['email'] = $_POST['email'];
+
     $id = $_POST['id'];
     $name = $_POST['name'];
     $email = $_POST['email'];
@@ -21,10 +24,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     $loc = $_POST['loc'];
     $work = $_POST['work'];
     $query = mysqli_query($dbconfig,"INSERT INTO user_data (id,fb_id,fb_name,img,fb_email,fb_firstname,fb_lastname,fb_bday,fb_edu,fb_home,fb_location,fb_work)
-SELECT * FROM (SELECT NULL,'$id','$name','$img','$email','$fname','$lname','$bday','$edu','$ht','$loc','$work')
-AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email') LIMIT 1");
+                                    SELECT * FROM (SELECT NULL,'$id','$name','$img','$email','$fname','$lname','$bday','$edu','$ht','$loc','$work')
+                                    AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email') LIMIT 1");
 
-    $_SESSION['email'] = $_POST['email'];
 }
 
 ?>
@@ -48,6 +50,7 @@ AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email')
     <script type="text/javascript">
         window.setInterval(function() {
         $(document).ready(function () {
+            console.log(<?php echo json_encode($_COOKIE['cookiee'])?>)
             var button_login = document.getElementById("btn");
             var button_logout = document.getElementById("btn_logout");
             if(localStorage.hasOwnProperty("email")){
@@ -153,7 +156,6 @@ AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email')
             function(response) {
                 if (response.authResponse) {
                     FB.api('/me',{"fields":"id,name,email,first_name,last_name,birthday,education,hometown,location,work"}, function(response) {
-                        //var im = document.getElementById("image").setAttribute("src", "http://graph.facebook.com/" + response.id + "/picture?type=normal");
 
 
                         var img_link = "http://graph.facebook.com/" + response.id + "/picture?type=normal";
@@ -161,7 +163,6 @@ AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email')
                         var hr = new XMLHttpRequest();
 
                         var url = "Header.php";
-                        //"firstname="+response.id+"&lastname="+response.na
                         var vars = "id="+response.id+"&name="+response.name+"&fname="+response.first_name+"&lname="+response.last_name+"&img="+img_link+
                             "&bday="+response.birthday+"&edu="+response.education[response.education.length - 1].school.name+"&ht="+response.hometown.name+"&loc="+response.location.name+"&work="+response.work[response.work.length - 1].employer.name+"&email="+response.email;
                         hr.open("POST", url, true);
@@ -169,13 +170,13 @@ AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email')
 
                         hr.onreadystatechange = function() {
                             if(hr.readyState == 4 && hr.status == 200) {
-                                var return_data = hr.responseText;
+                                location.reload('index.php');
                             }
                         }
                         localStorage.setItem("email",response.email);
                         localStorage.setItem("id",response.id);
-
-                        hr.send(vars); // Actually execute the request
+                        document.cookie = "cookiee="+response.email+'; Path=/;';
+                        hr.send(vars);
                     });
                 } else {
                     console.log('User cancelled login or did not fully authorize.');
@@ -185,6 +186,8 @@ AS tmp WHERE NOT EXISTS (SELECT fb_email FROM user_data WHERE fb_email='$email')
         );
     }
     function logHimOut(){
+        <?php session_destroy();?>
+        document.cookie = "cookiee" +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         localStorage.removeItem("email");
     }
     //FACEBOOK SDK   [END]
